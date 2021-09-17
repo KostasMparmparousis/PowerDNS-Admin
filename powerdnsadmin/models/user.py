@@ -405,6 +405,33 @@ class User(db.Model):
             current_app.logger.error('Unsupported authentication method')
             return False
 
+    def is_user(self):
+        from ..models.role import Role
+        User_role_id= Role.query.filter_by(name="User").first().id
+        if (self.role_id==User_role_id):
+            return True
+        return False
+
+    def is_authenticate(self):
+        """
+        Check if a (type) user has access to at least one domain
+        """
+        user = User.query.filter(User.id == self.id).first()
+        if user.is_user() and user.get_user_domains() == []:
+            admins = User.query.filter(User.role_id == 1)
+            admin_email = None
+            for admin in admins:
+                if admin.email:  #admin has an active email
+                    admin_email = admin.email
+                    break
+
+            e="User " + user.username + " does not have any domains registered"
+            current_app.logger.warning(
+                "Unauthorized user: {}".format(e))
+            return {'auth': False, 'admin_email': admin_email}
+
+        return {'auth': True, 'admin_email': None}
+
     def create_user(self):
         """
         If user logged in successfully via LDAP in the first time
@@ -633,7 +660,6 @@ class User(db.Model):
             accounts.append(q[1])
         return accounts
 
-
     def read_entitlements(self, key):
         """
         Get entitlements from ldap server associated with this user
@@ -793,6 +819,3 @@ def getUserInfo(DomainsOrAccounts):
     for DomainOrAccount in DomainsOrAccounts:
         current.append(DomainOrAccount.name)
     return current
-
-        
-

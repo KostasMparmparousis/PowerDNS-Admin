@@ -168,6 +168,14 @@ def login():
                 return redirect(url_for('index.login'))
 
         session['user_id'] = user.id
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'Google OAuth', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
         login_user(user, remember=False)
         session['authentication_type'] = 'OAuth'
         signin_history(user.username, 'Google OAuth', True)
@@ -196,6 +204,14 @@ def login():
 
         session['user_id'] = user.id
         session['authentication_type'] = 'OAuth'
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'Github OAuth', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
         login_user(user, remember=False)
         signin_history(user.username, 'Github OAuth', True)
         return redirect(url_for('index.index'))
@@ -367,7 +383,14 @@ def login():
                         history.add()
                     current_app.logger.warning('group info: {} '.format(account_id))
 
-
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'Azure OAuth', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
         login_user(user, remember=False)
         signin_history(user.username, 'Azure OAuth', True)
         return redirect(url_for('index.index'))
@@ -429,6 +452,14 @@ def login():
 
         session['user_id'] = user.id
         session['authentication_type'] = 'OAuth'
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'OIDC OAuth', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
         login_user(user, remember=False)
         signin_history(user.username, 'OIDC OAuth', True)
         return redirect(url_for('index.index'))
@@ -477,6 +508,7 @@ def login():
                                    saml_enabled=SAML_ENABLED,
                                    error=e)
 
+
         # check if user enabled OPT authentication
         if user.otp_secret:
             if otp_token and otp_token.isdigit():
@@ -507,6 +539,15 @@ def login():
                         user.set_role("User")
                         user.revoke_privilege(True)
                         current_app.logger.warning('Procceding to revoke every privilige from ' + user.username + '.' )
+
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'LOCAL', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
 
         login_user(user, remember=remember_me)
         signin_history(user.username, 'LOCAL', True)
@@ -1033,6 +1074,14 @@ def saml_authorized():
         user.plain_text_password = None
         user.update_profile()
         session['authentication_type'] = 'SAML'
+        result = user.is_authenticate()
+        if result['auth'] == False:
+            signin_history(user.username, 'SAML', False)
+            return render_template('errors/401.html',
+                                saml_enabled=SAML_ENABLED,
+                                error='Unauthorized',
+                                username= user.username,
+                                admin_email= result['admin_email'])
         login_user(user, remember=False)
         signin_history(user.username, 'SAML', True)
         return redirect(url_for('index.login'))
