@@ -396,7 +396,9 @@ def login():
         return redirect(url_for('index.index'))
 
     if 'oidc_token' in session:
-        me = json.loads(oidc.get('userinfo').text)
+        # me = json.loads(oidc.get('userinfo').text)
+        # /profile is the default endpoint of CAS for getting user's info
+        me = json.loads(oidc.get('profile').text)
         oidc_username = me[Setting().get('oidc_oauth_username')]
         oidc_givenname = me[Setting().get('oidc_oauth_firstname')]
         oidc_familyname = me[Setting().get('oidc_oauth_last_name')]
@@ -435,8 +437,9 @@ def login():
         if Setting().get('autoprovisioning_oidc'):
             urn_value=Setting().get('urn_value_oidc')
             key=Setting().get('autoprovisioning_attribute_oidc')
-            if key in me:
-                Entitlements=[me[key]] if type(me[key]) is not list else me[key]
+            # key (eduPersonEntitlement) is located inside the 'attributes' scope of the user's object retrieved from CAS
+            if key in me['attributes']:
+                Entitlements=[me['attributes'][key]] if type(me['attributes'][key]) is not list else me['attributes'][key]
                 if len(Entitlements)==0 and Setting().get('purge_oidc'):
                     user.set_role("User")
                     user.revoke_privilege(True)
