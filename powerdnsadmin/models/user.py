@@ -666,11 +666,11 @@ class User(db.Model):
         entitlements= getCorrectEntitlements(Entitlements)
         if len(entitlements)!=0:
             self.revoke_privilege(True)
+            role="User"
             for entitlement in entitlements:
                 arguments=entitlement.split(':')
                 entArgs=arguments[arguments.index('powerdns-admin')+1:]
-                role= entArgs[0]
-                self.set_role(role)
+                role= self.getRole(role,entArgs[0])
                 if (role=="User") and len(entArgs)>1:
                     current_domains=getUserInfo(self.get_user_domains())
                     current_accounts=getUserInfo(self.get_accounts())
@@ -679,6 +679,14 @@ class User(db.Model):
                     if len(entArgs)>2:
                         account=entArgs[2]
                         self.addMissingAccount(account, current_accounts)
+            self.set_role(role)
+
+    def getRole(self, previousRole, newRole):
+        dict = { "User": 1, "Operator" : 2, "Administrator" : 3}
+        if (dict[newRole] > dict[previousRole]):
+            return newRole
+        else:
+            return previousRole
 
     def addMissingDomain(self, autoprovision_domain, current_domains):
         """
