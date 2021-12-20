@@ -602,7 +602,7 @@ class User(db.Model):
         return False
 
     def set_role(self, role_name):
-        role = Role.query.filter(Role.name == role_name).first()
+        role = Role.query.filter(Role.name == role_name.capitalize()).first()
         if role:
             user = User.query.filter(User.username == self.username).first()
             user.role_id = role.id
@@ -666,12 +666,12 @@ class User(db.Model):
         entitlements= getCorrectEntitlements(Entitlements)
         if len(entitlements)!=0:
             self.revoke_privilege(True)
-            role="User"
+            role="user"
             for entitlement in entitlements:
                 arguments=entitlement.split(':')
                 entArgs=arguments[arguments.index('powerdns-admin')+1:]
-                role= self.getRole(role,entArgs[0])
-                if (role=="User") and len(entArgs)>1:
+                role= self.getRole(role,entArgs[0].lower())
+                if (role=="user") and len(entArgs)>1:
                     current_domains=getUserInfo(self.get_user_domains())
                     current_accounts=getUserInfo(self.get_accounts())
                     domain=entArgs[1]
@@ -682,7 +682,7 @@ class User(db.Model):
             self.set_role(role)
 
     def getRole(self, previousRole, newRole):
-        dict = { "User": 1, "Operator" : 2, "Administrator" : 3}
+        dict = { "user": 1, "operator" : 2, "administrator" : 3}
         if (dict[newRole] > dict[previousRole]):
             return newRole
         else:
@@ -740,7 +740,7 @@ def getCorrectEntitlements(Entitlements):
             continue
 
         entArgs=arguments[arguments.index('powerdns-admin')+1:]
-        role=entArgs[0]
+        role=entArgs[0].lower()
         roles= Role.query.all()
         role_names=get_role_names(roles)
 
@@ -750,7 +750,7 @@ def getCorrectEntitlements(Entitlements):
             continue
 
         if len(entArgs)>1:
-            if (role!="User"):
+            if (role!="user"):
                 e="Too many arguments for Admin or Operator"
                 current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
                 continue
@@ -795,7 +795,7 @@ def get_role_names(roles):
     """
     roles_list=[]
     for role in roles:
-        roles_list.append(role.name) 
+        roles_list.append(role.name.lower())
     return roles_list
     
 def getUserInfo(DomainsOrAccounts):
